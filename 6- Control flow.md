@@ -16,6 +16,21 @@ FROM addresses;
 
 This would rename the columns.
 
+## Adding Custom Row and Cell Names in SQL
+
+You can use name rows to display data better, especially when large quantities of data are involved.
+
+This code:
+
+```
+SELECT 'Email:', users_email, 'Name:', users_name
+FROM users;
+```
+
+Gives this:
+
+![Custom names](https://s3-us-west-2.amazonaws.com/devcamp-pictures/SQL+images/Adding+Custom+Row+and+Cell+Names+in+SQL+%23+1025/Screen+Shot+2017-10-26+at+9.58.09+AM.png)
+
 ## How to Alias Table Names in SQL
 
 Greater and Lesser than signs can be used with where clauses to select items.
