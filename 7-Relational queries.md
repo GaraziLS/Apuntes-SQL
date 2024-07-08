@@ -83,3 +83,107 @@ ON a.addresses_users_id = u.users_id
 ORDER BY g.guides_revenue DESC;
 ```
 
+## Inner vs outer joins
+
+```
+SELECT *
+FROM guides g
+JOIN users u
+ON g.guides_users_id = u.users_id;
+```
+
+Given that base code, it's important to know that inner joins won't bring users that didn't write any guides. In other words, inner joins won't join null values. Outer joins will, though.
+
+In order to use outer joins, we'll write:
+
+```
+SELECT *
+FROM guides g
+RIGHT JOIN users u
+ON g.guides_users_id = u.users_id;
+```
+
+There are also left joins. The order of joined tables matter, so the result is different.
+
+* (INNER) JOIN: Returns records that have matching values in both tables.
+
+
+![inner join](https://learnsql.es/blog/explicacion-de-los-tipos-de-join-en-sql/1-big.webp)
+
+* LEFT (OUTER) JOIN: Returns all records from the left table, and the matched records from the right table.
+
+![left outer joim](https://learnsql.es/blog/explicacion-de-los-tipos-de-join-en-sql/3-big.webp)
+
+* RIGHT (OUTER) JOIN: Returns all records from the right table, and the matched records from the left table.
+
+![right outer join](https://learnsql.es/blog/explicacion-de-los-tipos-de-join-en-sql/4-big.webp)
+
+* FULL (OUTER) JOIN: Returns all records when there is a match in either left or right table.
+
+![full outer join](https://learnsql.es/blog/explicacion-de-los-tipos-de-join-en-sql/5-big.webp)
+
+
+
+> Right and left outer joins can be done also by changing the order of the tables. Thus, we'd only have to use one type.
+
+```
+SELECT *
+FROM users u
+LEFT JOIN guides g
+ON g.guides_users_id = u.users_id;
+```
+
+This code will show the users in the left side and the guides on the right. It also displays null values in the right guide,because we're prioritizing the left side.
+
+```
+SELECT *
+FROM guides g 
+LEFT JOIN users u
+ON g.guides_users_id = u.users_id;			
+```
+
+This code, however, will put the guides in the left and the users in the right. It doesn't display null values because all the rows in the left (guides) have a user. 
+
+> Deoending on which side we're choosing, null values will display (or not) because the main table varies. If a table of users is in the left and we're using a left join, null values will display because we're selecting everything. If we change the order of the tables or use a right join, null values won't display because the main table is changed and it only shows coincidences on the right side.
+
+## How to Build a Summary Report of Data from 3 Tables in SQL
+
+This comprehensive guide walks through how to join three tables and utilize the COALESCE function in order to accurately count records in each table and format the data for users.
+
+```
+SELECT *
+FROM users u
+JOIN addresses a
+ON addresses_users_id = u.users_id
+JOIN guides g
+ON g.guides_users_id = u.users_id
+```
+
+Given this code, we get duplicate users. We don't want that. So, for example, we only have two users that were shown and that is because our other sample users either only have addresses associated with their names or they only have guides but they don't have both and the only users that will show up in a multiple join inner join type table query are going to be the users that have data and a reference in all of the tables. It shows if there's data, regardless of it's duplicated or not.
+
+> We'll create a summary report with all of these tables. First, we'll select the users_email, and then we'll use a function called COALESCE. It's similar to the count function, but won't count null values.
+
+```
+SELECT
+  u.users_email AS 'Email',
+  COALESCE(g.guide_count, 0) AS guide_count,
+  COALESCE(a.address_count, 0) AS address_count
+FROM users u
+  LEFT JOIN (
+    SELECT COUNT(*) AS guide_count, guides_users_id
+    FROM guides
+    GROUP BY guides_users_id
+  ) AS g
+  ON g.guides_users_id = u.users_id
+  LEFT JOIN (
+    SELECT COUNT(*) AS address_count, addresses_users_id
+    FROM addresses
+    GROUP BY addresses_users_id
+  ) AS a
+  ON a.addresses_users_id = u.users_id
+ORDER BY u.users_email;
+```
+
+COALESCE takes two arguments. The first is the thing that will be counted and that appears in subqueries because it's what is selected, the second param is the value that null will take. Then we select the main table, users ( alias u).
+
+Then we proceed to do an outer join where we select and count the guide_count (of the coalesce function) and the foreign key, then we select the secondary table (the table that holds the data we're querying) and group by the foreign key. Then we alias the outer joins and join everything to the foreign key. Finally, we order the data.
