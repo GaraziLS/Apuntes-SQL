@@ -159,6 +159,18 @@ JOIN guides g
 ON g.guides_users_id = u.users_id
 ```
 
+You can also select multiple columns and even perform calculations from different tables if you join them later. Remember that grouping and ordering items come last:
+
+```
+SELECT 
+	c.course_name,
+    avg(grade_value) as grade_avg
+FROM project_grades g
+JOIN project_courses c on c.course_grades_id = g.grade_id
+GROUP BY course_name
+ORDER BY grade_avg asc
+```
+
 Given this code, we get duplicate users. We don't want that. So, for example, we only have two users that were shown and that is because our other sample users either only have addresses associated with their names or they only have guides but they don't have both and the only users that will show up in a multiple join inner join type table query are going to be the users that have data and a reference in all of the tables. It shows if there's data, regardless of it's duplicated or not.
 
 > We'll create a summary report with all of these tables. First, we'll select the users_email, and then we'll use a function called COALESCE. It's similar to the count function, but won't count null values.
