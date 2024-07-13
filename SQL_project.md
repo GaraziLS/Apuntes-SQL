@@ -94,7 +94,7 @@ ADD CONSTRAINT `grade_students_id`
 
 Here's how our database looks like:
 
-![visual database](https://i.postimg.cc/0Q6fgkcq/Captura-de-pantalla-2024-07-13-105437.png)
+![visual database](https://i.postimg.cc/xTcQJFnC/db-project-finished.png)
 
 ## Creating a script that populates all the tables
 
