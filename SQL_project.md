@@ -18,7 +18,7 @@ CREATE TABLE `sql_project`.`project_students` (
   `student_id` INT NOT NULL AUTO_INCREMENT,
   `student_name` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`student_id`),
-  UNIQUE INDEX `students_id_UNIQUE` (`student_id` ASC) VISIBLE);
+  UNIQUE INDEX `student_id_UNIQUE` (`student_id` ASC) VISIBLE);
 ```
 
 **The teachers table**
@@ -29,7 +29,6 @@ CREATE TABLE `sql_project`.`project_teachers` (
   `teacher_name` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`teacher_id`),
   UNIQUE INDEX `teacher_id_UNIQUE` (`teacher_id` ASC) VISIBLE);
-
 ```
 
 **The courses table**
@@ -40,32 +39,47 @@ CREATE TABLE `sql_project`.`project_courses` (
   `course_name` VARCHAR(45) NOT NULL,
   `course_teachers_id` INT NOT NULL,
   PRIMARY KEY (`course_id`),
-  UNIQUE INDEX `course_id_UNIQUE` (`course_id` ASC) VISIBLE);
+  UNIQUE INDEX `course_id_UNIQUE` (`course_id` ASC) VISIBLE,
+  INDEX `course_teachers_id_idx` (`course_teachers_id` ASC) VISIBLE,
+  CONSTRAINT `course_teachers_id`
+    FOREIGN KEY (`course_teachers_id`)
+    REFERENCES `sql_project`.`project_teachers` (`teacher_id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION);
 ```
 
-**The grades table**
+And to finish this off, we'll create the grades table:
 
 ```
 CREATE TABLE `sql_project`.`project_grades` (
   `grade_id` INT NOT NULL AUTO_INCREMENT,
-  `grade_courses_id` INT NOT NULL,
   `grade_students_id` INT NOT NULL,
-  `grade_value` DECIMAL NOT NULL,
+  `grade_courses_id` INT NOT NULL,
+  `grade_value` DECIMAL(10,2) NOT NULL,
   PRIMARY KEY (`grade_id`),
-  UNIQUE INDEX `grade_id_UNIQUE` (`grade_id` ASC) VISIBLE);
+  UNIQUE INDEX `grade_id_UNIQUE` (`grade_id` ASC) VISIBLE,
+  INDEX `grade_students_id_idx` (`grade_students_id` ASC) VISIBLE,
+  INDEX `grade_courses_id_idx` (`grade_courses_id` ASC) VISIBLE,
+  CONSTRAINT `grade_students_id`
+    FOREIGN KEY (`grade_students_id`)
+    REFERENCES `sql_project`.`project_students` (`student_id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION,
+  CONSTRAINT `grade_courses_id`
+    FOREIGN KEY (`grade_courses_id`)
+    REFERENCES `sql_project`.`project_courses` (`course_id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION);
 ```
+
+> Create the keys in the same table(s), not bidirectionally. Also don't create a FK in a table that doesn't have another point of connection to other tables (if courses have connections to teachers but grades don't, you can't connect grades to teachers, for example).
+
+> You can join a table that doesn't have a FK (teachers) by the FK that points to it (grade_teachers_id points to teacher_id).
+
 
 ## Creating a script that populates all the tables
 
 We'll now populate each table.
-
-> Note: Don't create foreign keys before populating data, because if done before, if table A has data but table B and C don't, and table A is linked to the other two, issues will occur, because we're populating data with data that comes from a table that doesn't have data yet, and issues will happen.
-
-> Note 2: CREATE ALL THE FOREIGN KEYS AT ONCE. IF YOU TRY TO ADD SOME LATER, ISSUES WILL HAPPEN.
-
-> Note 3: You can't populate a row with two values. This:
-
-Now we'll populate the students' table:
 
 **Students table**
 
@@ -135,88 +149,33 @@ VALUES ("3", "2", "7.00");
 INSERT INTO project_grades(grade_students_id, grade_courses_id, grade_value)
 VALUES ("5", "3", "10.00");
 
-
-
 INSERT INTO project_grades(grade_students_id, grade_courses_id, grade_value)
 VALUES ("2", "4", "3.75");
 
 INSERT INTO project_grades(grade_students_id, grade_courses_id, grade_value)
-VALUES ("4", "5", "5.00");
+VALUES ("4", "2", "5.00");
 
 INSERT INTO project_grades(grade_students_id, grade_courses_id, grade_value)
-VALUES ("6", "6", "6.75");
-
-
-
+VALUES ("6", "4", "6.75");
 
 INSERT INTO project_grades(grade_students_id, grade_courses_id, grade_value)
-VALUES ("1", "7", "0.00");
+VALUES ("1", "1", "0.00");
 
 INSERT INTO project_grades(grade_students_id, grade_courses_id, grade_value)
-VALUES ("2", "8", "7.50");
+VALUES ("2", "3", "7.50");
 
 INSERT INTO project_grades(grade_students_id, grade_courses_id, grade_value)
-VALUES ("3", "9", "0.00");
-
-
+VALUES ("3", "1", "0.00");
 
 INSERT INTO project_grades(grade_students_id, grade_courses_id, grade_value)
-VALUES ("4", "10", "7.50");
+VALUES ("4", "2", "7.50");
 
 INSERT INTO project_grades(grade_students_id, grade_courses_id, grade_value)
-VALUES ("5", "11", "8.00");
+VALUES ("5", "3", "8.00");
 
 INSERT INTO project_grades(grade_students_id, grade_courses_id, grade_value)
-VALUES ("6", "12", "10.00");
+VALUES ("6", "4", "10.00");
 ```
-## Creating the foreign keys
-
-We'll now connect the tables. To do so, we'll create foreign keys following this structure (we're in the courses table):
-
-```
-ALTER TABLE `sql_project`.`project_courses` 
-ADD INDEX `course_teachers_id_idx` (`course_teachers_id` ASC) VISIBLE;
-;
-ALTER TABLE `sql_project`.`project_courses` 
-ADD CONSTRAINT `course_teachers_id`
-  FOREIGN KEY (`course_teachers_id`)
-  REFERENCES `sql_project`.`project_teachers` (`teacher_id`)
-  ON DELETE CASCADE
-  ON UPDATE NO ACTION;
-```
-
-And to finish this off, the grades table:
-
-```
-ALTER TABLE `sql_project`.`project_grades` 
-DROP FOREIGN KEY `grade_courses_id`,
-DROP FOREIGN KEY `grade_students_id`;
-ALTER TABLE `sql_project`.`project_grades` 
-DROP INDEX `grade_students_id_idx` ;
-ALTER TABLE `sql_project`.`project_grades` ALTER INDEX `grade_courses_id_idx` VISIBLE;
-ALTER TABLE `sql_project`.`project_grades` 
-ADD CONSTRAINT `grade_courses_id`
-  FOREIGN KEY (`grade_courses_id`)
-  REFERENCES `sql_project`.`project_courses` (`course_id`)
-  ON DELETE CASCADE
-  ON UPDATE NO ACTION;
-
-  ALTER TABLE `sql_project`.`project_grades` 
-ADD INDEX `grade_students_id_idx` (`grade_students_id` ASC) VISIBLE;
-;
-ALTER TABLE `sql_project`.`project_grades` 
-ADD CONSTRAINT `grade_students_id`
-  FOREIGN KEY (`grade_students_id`)
-  REFERENCES `sql_project`.`project_students` (`student_id`)
-  ON DELETE CASCADE
-  ON UPDATE NO ACTION;
-
-```
-
-> Create the keys in the same table(s), not bidirectionally. Also don't create a FK in a table that doesn't have another point of connection to other tables (if courses have connections to teachers but grades don't, you can't connect grades to teachers, for example).
-
-> You can join a table that doesn't have a FK (teachers) by the FK that points to it (grade_teachers_id points to teacher_id).
-
 
 ## Calculating the average grade given by each teacher
 
@@ -266,7 +225,7 @@ order by c.course_id asc
 
 ## Summary report of courses and average grades
 
-We now want to get the average grade of each course. We'll select the courses and do a calculated field to get the average value, will import it from grades, and then we'll do the course joining. Finally, we'll group by course name and weill order the averages.
+We now want to get the average grade of each course. We'll select the courses and do a calculated field to get the average value, will import it from grades, and then we'll do the course joining. Finally, we'll group by course name and we'll order the averages.
 
 ```
 SELECT 
